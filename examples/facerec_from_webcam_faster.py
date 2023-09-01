@@ -2,7 +2,7 @@ import face_recognition
 import cv2
 import numpy as np
 import serial
-from multiprocessing import Process , Queue
+from multiprocessing import Process, Queue, freeze_support
 from vidgear.gears import NetGear
 # This is a demo of running face recognition on live video from your webcam. It's a little more complicated than the
 # other example, but it includes some basic performance tweaks to make things run a lot faster:
@@ -18,38 +18,32 @@ from vidgear.gears import NetGear
 
 video_capture = cv2.VideoCapture(0)
 
-known_face_encodings = np.load("examples/training/imageTrain.npy")
+known_face_encodings = np.load("training/imageTrain.npy")
 
-known_face_names = np.load("examples/training/nameTrain.npy")
+known_face_names = np.load("training/nameTrain.npy")
 
 # Initialize some variables
-rfid = Queue(2)
-q_data = Queue(2)
 
 def read_rfid(rfid):
     try:
-        port_arduino = serial.Serial("/dev/ttyUSB0", baudrate=9600, timeout=1)
+        port_arduino = serial.Serial("COM3", baudrate=9600, timeout=1)
+        while True:
+            data = port_arduino.read(128)
+            rawdata = str(data.hex())
+            value = len(data)
+            if value >= 1:
+                if not rfid.full():
+                    rfid.put(rawdata)
     except Exception as error:
         print(error)
-    while True:
-        data = port_arduino.read(128)
-        rawdata = str(data.hex())
-        value = len(data)
-        if value >= 1:
-            if not rfid.full():
-                rfid.put(rawdata)
 
-th_rfid = Process(target=read_rfid,args=(rfid,))
-th_rfid.start()
-
-
-def run():
+def run(q_data, rfid):
     face_locations = []
     face_encodings = []
     process_this_frame = True
     while True:
         face_names = []
-        matching = ""
+        matching = "Unknown"
         # Grab a single frame of video
         ret, frame = video_capture.read()
 
@@ -60,7 +54,7 @@ def run():
 
             # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
             rgb_small_frame = small_frame[:, :, ::-1]
-            
+
             # Find all the faces and face encodings in the current frame of video
             face_locations = face_recognition.face_locations(rgb_small_frame)
             face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
@@ -89,12 +83,12 @@ def run():
                         d_rfid = rfid.get(True)
                         # print(d_rfid)
                         if id == d_rfid:
-                            matching = "Mactched"
+                            matching = "Matched"
                         else:
                             matching = "Not Matched"
                 face_names.append(name)
 
-        process_this_frame = not process_this_frame
+        # process_this_frame = not process_this_frame
 
 
         # Display the results
@@ -108,7 +102,7 @@ def run():
             # Draw a box around the face
             cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
 
-            # Draw a label with a name below the face   
+            # Draw a label with a name below the face
             cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
             font = cv2.FONT_HERSHEY_DUPLEX
             cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
@@ -123,29 +117,33 @@ def run():
         #     th_rfid.terminate()
         #     break
 
-def stream_server():
+def stream_server(q_data):
     options = {"flag": 0, "copy": False, "track": False, "bidirectional_mode": True}
     server = NetGear (
-        address = "192.168.1.22",
-        port = "5454",
-        protocol = "tcp",
-        pattern = "1",
-        logging = True,
+        address= "192.168.1.22",
+        port= "5454",
+        protocol= "tcp",
+        pattern= 1,
+        logging= True,
         max_retries = 100,
-        **options 
+        **options
     )
     while True:
-        print("hello")
         if not q_data.empty():
-            frame, matching = q_data.get(True)
-            print(frame)
-            # server.send(frame=frame, message=matching)
+            frame, message = q_data.get(True)
+            # print(message)
+            server.send(frame=frame, message=message)
 
 # Release handle to the webcam
 if __name__ == "__main__":
-    server_run = Process(target=stream_server)
-    run_run = Process(target=run)
+    freeze_support()
+    rfid = Queue(2)
+    q_data = Queue(2)
+    th_rfid = Process(target=read_rfid, args=(rfid,))
+    server_run = Process(target=stream_server, args=(q_data,))
+    run_run = Process(target=run, args=(q_data, rfid))
     try:
+        th_rfid.start()
         server_run.start()
         run_run.start()
     except KeyboardInterrupt:

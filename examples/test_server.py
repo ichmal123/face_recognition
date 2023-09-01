@@ -8,7 +8,7 @@ stream = cv2.VideoCapture(0)
 # define tweak flags
 options = {"flag": 0, "copy": False, "track": False}
 
-# Define Netgear Client at given IP address and define parameters 
+# Define Netgear Client at given IP address and define parameters
 # !!! change following IP address '192.168.x.xxx' with yours !!!
 client = NetGear(
     address="192.168.1.22",
@@ -16,6 +16,7 @@ client = NetGear(
     protocol="tcp",
     pattern=1,
     logging=True,
+    max_retries = 100,
     **options
 )
 
@@ -35,6 +36,7 @@ while True:
         # {do something with the frame here}
 
         # send frame to server
+        print(small_frame)
         client.send(small_frame)
 
     except KeyboardInterrupt:
