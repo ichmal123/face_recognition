@@ -26,10 +26,11 @@ face_locations = []
 face_encodings = []
 face_names = []
 process_this_frame = True
+matching = "Unknown"
 
-options = {"flag": 0, "copy": False, "track": False}
+options = {"flag": 0, "copy": False, "track": False, "bidirectional_mode": True}
 server = NetGear (
-        address= "192.168.1.11",
+        address= "192.168.53.245",
         port= "5454",
         protocol= "tcp",
         pattern= 1,
@@ -106,8 +107,7 @@ while True:
             face_names.append(name)
 
         if len(face_encodings) <= 0:
-            if not q_rfid.empty():
-                q_rfid.clear()
+            matching = "Unknown"
 
     # process_this_frame = not process_this_frame
 
@@ -130,9 +130,9 @@ while True:
 
     # Display the resulting image
     # cv2.imshow('Video', frame)
-    small_frame2 = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
+    small_frame2 = cv2.resize(frame, (0, 0), fx=0.4, fy=0.4)
 
-    server.send(frame=small_frame2)
+    server.send(frame=small_frame2, message=matching)
 
     # Hit 'q' on the keyboard to quit!
     if cv2.waitKey(1) & 0xFF == ord('q'):
