@@ -24,7 +24,7 @@ known_face_names = np.load("examples/training/nameTrain.npy")
 
 # Initialize some variables
 
-def read_rfid(q_rfid):
+def read_rfid(rfid):
     try:
         port_arduino = serial.Serial("/dev/ttyUSB0", baudrate=9600, timeout=1)
         while True:
@@ -32,15 +32,25 @@ def read_rfid(q_rfid):
             rawdata = str(data.hex())
             value = len(data)
             if value >= 1:
-                if not q_rfid.full():
-                    q_rfid.put(rawdata)
+                if not rfid.full():
+                    rfid.put(rawdata)
     except Exception as error:
         print(error)
 
-def run(q_data, rfid):
+def run(rfid):
     face_locations = []
     face_encodings = []
     process_this_frame = True
+    options = {"flag": 0, "copy": False, "track": False, "bidirectional_mode": True}
+    server = NetGear (
+        address= "192.168.1.11",
+        port= "5454",
+        protocol= "tcp",
+        pattern= 1,
+        logging= True,
+        max_retries = 100,
+        **options
+    )
     while True:
         face_names = []
         matching = "Unknown"
@@ -109,47 +119,46 @@ def run(q_data, rfid):
 
         # Display the resulting image
         # cv2.imshow('Video', frame)
-        if not q_data.full() and ret:
-            q_data.put([frame, matching])
+        server.send(frame=small_frame, message=matching)
 
         # Hit 'q' on the keyboard to quit!
         # if cv2.waitKey(1) & 0xFF == ord('q'):
         #     th_rfid.terminate()
         #     break
 
-def stream_server(q_data):
-    options = {"flag": 0, "copy": False, "track": False, "bidirectional_mode": True}
-    server = NetGear (
-        address= "192.168.1.11",
-        port= "5454",
-        protocol= "tcp",
-        pattern= 1,
-        logging= True,
-        max_retries = 100,
-        **options
-    )
-    while True:
-        if not q_data.empty():
-            frame, message = q_data.get(True)
-            # print(message)
-            server.send(frame=frame, message=message)
+# def stream_server(q_data):
+#     options = {"flag": 0, "copy": False, "track": False, "bidirectional_mode": True}
+#     server = NetGear (
+#         address= "192.168.1.11",
+#         port= "5454",
+#         protocol= "tcp",
+#         pattern= 1,
+#         logging= True,
+#         max_retries = 100,
+#         **options
+#     )
+#     while True:
+#         if not q_data.empty():
+#             frame, message = q_data.get(True)
+#             # print(message)
+#             server.send(frame=frame, message=message)
 
 # Release handle to the webcam
 if __name__ == "__main__":
     # freeze_support()
     rfid = Queue(2)
-    q_data = Queue(2)
+    # q_data = Queue(2)
     th_rfid = Process(target=read_rfid, args=(rfid,))
-    run_run = Process(target=run, args=(q_data, rfid))
-    server_run = Process(target=stream_server, args=(q_data,))
+    run_run = Process(target=run, args=(rfid,))
+    # server_run = Process(target=stream_server, args=(q_data,))
     try:
         th_rfid.start()
         run_run.start()
-        server_run.start()
+        # server_run.start()
     except KeyboardInterrupt:
         th_rfid.terminate()
         video_capture.release()
-        server_run.close()
+        # server_run.close()
         run_run.close()
     # video_capture.release()
     # cv2.destroyAllWindows()
