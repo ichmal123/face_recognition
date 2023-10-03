@@ -1,10 +1,10 @@
 import connection
 
-def insertData (name, rfid):
+def insertData (nik, nama, tempatTgl, tgl, kelamin, alamat, agama, status, pekerjaan, kewarganegaraan, berlaku, rfid):
     con = connection.Connection()
     cursor = con.getConnection().cursor()
-    sql = "INSERT INTO user (name, rfid_card) VALUES (%s, %s)"
-    value = (name, rfid)
+    sql = "INSERT INTO user (nik, nama, tempatTgl, tgl, kelamin, alamat, agama, status, pekerjaan, kewarganegaraan, berlaku, rfid) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    value = (nik, nama, tempatTgl, tgl, kelamin, alamat, agama, status, pekerjaan, kewarganegaraan, berlaku, rfid)
     cursor.execute(sql, value)
     con.getConnection().commit()
 
