@@ -4,6 +4,9 @@ import numpy as np
 from vidgear.gears import NetGear
 import serial
 from multiprocessing import Process, Queue
+import sys
+sys.path.append("examples/training")
+from training.adduser import insertData
 
 # This is a demo of running face recognition on live video from your webcam. It's a little more complicated than the
 # other example, but it includes some basic performance tweaks to make things run a lot faster:
@@ -27,10 +30,11 @@ face_encodings = []
 face_names = []
 process_this_frame = True
 matching = "Unknown"
+dataUser = []
 
 options = {"flag": 0, "copy": False, "track": False, "bidirectional_mode": True}
 server = NetGear (
-        address= "192.168.53.245",
+        address= "192.168.1.36",
         port= "5454",
         protocol= "tcp",
         pattern= 1,
@@ -50,7 +54,8 @@ def read_rfid(q_rfid):
             value = len(data)
             if value >= 1:
                 if not q_rfid.full():
-                    q_rfid.put(rawdata)
+                    dataUser = insertData.selectData(rawdata)
+                    q_rfid.put([rawdata, dataUser])  
     except Exception as error:
         print(error)
 
@@ -100,10 +105,12 @@ while True:
                 id = people[0]
                 if not q_rfid.empty():
                     val = q_rfid.get(True)
-                    if id == val:
+                    if id == val[0]:
                         matching = "Matched"
+                        dataUser = val[1]
                     else:
                         matching = "Not Matched"
+                        dataUser = []
             face_names.append(name)
 
         if len(face_encodings) <= 0:
@@ -132,7 +139,8 @@ while True:
     # cv2.imshow('Video', frame)
     small_frame2 = cv2.resize(frame, (0, 0), fx=0.4, fy=0.4)
 
-    server.send(frame=small_frame2, message=matching)
+    message = {"matching": matching, "dataUser": dataUser}
+    server.send(frame=small_frame2, message=message)
 
     # Hit 'q' on the keyboard to quit!
     if cv2.waitKey(1) & 0xFF == ord('q'):

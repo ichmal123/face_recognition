@@ -2,30 +2,23 @@ import face_recognition
 import numpy as np
 import os
 
-arung_image = face_recognition.load_image_file("/home/facedection/face_recognition/examples/new-dataset/150911110a020d130c13131a0205150801_arung.jpg")
-arung_face_encoding = face_recognition.face_encodings(arung_image)[0]
-ichmal_image = face_recognition.load_image_file("/home/facedection/face_recognition/examples/new-dataset/15091105051a19130a040105150801_ichmal.jpg")
+ichmal_image = face_recognition.load_image_file("/home/facedection/face_recognition/examples/new-dataset/1509111502130e13161a010405020205150801_Muhammad Ichmal Gumanof.jpg")
 ichmal_face_encoding = face_recognition.face_encodings(ichmal_image)[0]
-hakkan_image = face_recognition.load_image_file("/home/facedection/face_recognition/examples/new-dataset/150911151a050d0a1d0a040105150801_hakkan.jpg")
-hakkan_face_encoding = face_recognition.face_encodings(hakkan_image)[0]
+
 
 known_face_encodings = [
-    arung_face_encoding,
-    ichmal_face_encoding,
-    hakkan_face_encoding
+    ichmal_face_encoding
 ]
 
 np.save("examples/training/imageTrain.npy", known_face_encodings)
 
 name_list = [
-    ['150911110a020d130c13131a0205150801', 'arung'],
-    ['15091105051a19130a040105150801', 'ichmal'],
-    ['150911151a050d0a1d0a040105150801', 'hakkan']
+    ['1509111502130e13161a010405020205150801', 'ichmal']
 ]
 
 np.save("examples/training/nameTrain.npy", name_list)
 
-print(np.load("examples/training/imageTrain.npy"))
+# print(np.load("examples/training/imageTrain.npy"))
 
 # test = np.load("test.npy")
 
