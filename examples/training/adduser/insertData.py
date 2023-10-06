@@ -24,11 +24,12 @@ def selectData (rfid):
     cursor.execute(sql, value)
     result = cursor.fetchone()
 
-    for item in result:
-        x.append(item)
+    if result is not None:
+        for item in result:
+            x.append(item)
 
-    dateStr = '{:%d-%B-%Y}'.format(result[4])
-    x[4] = dateStr
+        dateStr = '{:%d-%B-%Y}'.format(result[4])
+        x[4] = dateStr
 
     return x
 
