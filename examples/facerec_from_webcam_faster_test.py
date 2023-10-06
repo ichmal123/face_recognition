@@ -32,9 +32,9 @@ process_this_frame = True
 matching = "Unknown"
 dataUser = []
 
-options = {"flag": 0, "copy": False, "track": False, "bidirectional_mode": True}
+options = {"flag": 0, "copy": False, "track": False, "bidirectional_mode": True, "jpeg_compression_quality": 50}
 server = NetGear (
-        address= "192.168.1.36",
+        address= "192.168.1.14",
         port= "5454",
         protocol= "tcp",
         pattern= 1,
@@ -55,6 +55,7 @@ def read_rfid(q_rfid):
             if value >= 1:
                 if not q_rfid.full():
                     dataUser = insertData.selectData(rawdata)
+                    print(dataUser)
                     q_rfid.put([rawdata, dataUser])  
     except Exception as error:
         print(error)
@@ -115,6 +116,7 @@ while True:
 
         if len(face_encodings) <= 0:
             matching = "Unknown"
+            dataUser = []
 
     # process_this_frame = not process_this_frame
 
@@ -131,13 +133,13 @@ while True:
         cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 0), 2)
 
         # Draw a label with a name below the face
-        cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 0), cv2.FILLED)
-        font = cv2.FONT_HERSHEY_DUPLEX
-        cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.5, (255, 255, 255), 1)
+        # cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 0), cv2.FILLED)
+        # font = cv2.FONT_HERSHEY_DUPLEX
+        # cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.5, (255, 255, 255), 1)
 
     # Display the resulting image
     # cv2.imshow('Video', frame)
-    small_frame2 = cv2.resize(frame, (0, 0), fx=0.4, fy=0.4)
+    small_frame2 = cv2.resize(frame, (0, 0), fx=0.35, fy=0.35)
 
     message = {"matching": matching, "dataUser": dataUser}
     server.send(frame=small_frame2, message=message)

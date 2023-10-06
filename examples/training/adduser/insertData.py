@@ -1,7 +1,9 @@
 import sys
 sys.path.append("examples/training")
-from training.adduser import connection
-from array import *
+try:
+    from training.adduser import connection
+except:
+    import connection
 
 def insertData (nik, nama, tempatTgl, tgl, kelamin, alamat, agama, status, pekerjaan, kewarganegaraan, berlaku, rfid):
     con = connection.Connection()
